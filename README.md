@@ -2,9 +2,9 @@
 
 一套面向企业网站、产品型网站和 B2B 网站的 SEO 研究、内容生产、网站架构、页面优化、技术检查、数据分析与长期治理方法。
 
-**当前版本：v2.0.0**
+**当前版本：v2.1.0**
 
-v2.0.0 不再增加新的 SEO 功能，而是对 v1.1.0—v1.8.0 已完成的方法论进行模块化重构：统一目录、模板、检查表与案例归属，减少重复内容，让整个仓库更适合长期维护。
+v2.1.0 在 v2.0.0 模块化知识库基础上新增 GitHub Pages 可视化阅读入口。SEO 方法论本身保持不变，新增能力只负责更方便地浏览、搜索和阅读仓库中的 Markdown 文档。
 
 ## 核心工作流
 
@@ -56,6 +56,12 @@ v2.0.0 不再增加新的 SEO 功能，而是对 v1.1.0—v1.8.0 已完成的方
 ```text
 seo-content-research-guide/
 ├── README.md
+├── index.html
+├── .nojekyll
+├── assets/
+│   ├── css/
+│   ├── js/
+│   └── data/
 ├── docs/
 │   ├── 01-foundation/
 │   ├── 02-research/
@@ -85,7 +91,55 @@ seo-content-research-guide/
     └── site-cases/
 ```
 
-根目录只保留一个 `README.md`，作为整个知识库的唯一入口。`docs/` 保存方法论，`templates/` 保存可复制工作表，`checklists/` 用于检查与放行，`examples/` 保存完整实践过程。
+根目录保持极简：`README.md` 作为 GitHub 仓库说明与导航入口，`index.html` 作为 GitHub Pages 可视化阅读入口，`.nojekyll` 用于让 GitHub Pages 按静态文件原样提供 Markdown，避免带 YAML 元数据的 `.md` 被 Jekyll 预处理。`assets/` 只保存阅读页面需要的本地 CSS、JavaScript 和文档目录清单；`docs/` 保存方法论，`templates/` 保存可复制工作表，`checklists/` 用于检查与放行，`examples/` 保存完整实践过程。
+
+## GitHub Pages 可视化阅读
+
+仓库根目录提供 `index.html`，用于把现有 Markdown 文档以更适合阅读的 HTML 页面展示出来。
+
+主要功能：
+
+- 7 个核心模块的首页导航；
+- 指南、模板、检查表与案例分类；
+- 按标题、描述、路径和类型进行轻量搜索；
+- 点击文档后在新标签页中打开 HTML 阅读模式；
+- 自动读取 Markdown 并生成正文排版；
+- 自动根据 H2 / H3 生成文章目录；
+- 支持表格、代码块、引用、列表和任务检查项；
+- Markdown 内部相对链接继续在阅读器中跳转；
+- 桌面端与手机端响应式阅读；
+- 不依赖第三方 CDN，也不需要 Node.js、npm 或构建流程；
+- 根目录使用 `.nojekyll`，确保 Markdown 文件由 GitHub Pages 原样提供给阅读器。
+
+### 启用 GitHub Pages
+
+仓库上传完成后：
+
+1. 打开 GitHub 仓库的 **Settings**。
+2. 进入 **Pages**。
+3. 在 **Build and deployment** 中选择 **Deploy from a branch**。
+4. Branch 选择 `main`，目录选择 `/(root)`。
+5. 保存后，通过 GitHub 提供的 Pages 地址访问。
+
+如果仓库名采用 `seo-research-playbook`，通常访问形式为：
+
+```text
+https://<GitHub用户名>.github.io/seo-research-playbook/
+```
+
+### 文档目录维护
+
+阅读首页使用：
+
+```text
+assets/data/catalog.json
+```
+
+保存文档标题、路径、类型和模块信息。
+
+- 只修改现有 `.md` 正文时，不需要修改目录清单。
+- 新增、删除或重命名 `.md` 文件时，需要同步更新 `catalog.json` 中对应记录。
+- 阅读器本身不修改 Markdown 文件，仓库中的 `.md` 始终是唯一正文来源。
 
 ## 推荐使用方式
 
@@ -184,16 +238,17 @@ Search Console 网站级分析
 
 ## 版本与后续维护
 
-**v2.0.0 已完成模块化重构。** 本版本没有新增大型 SEO 专题，主要完成：
+**v2.1.0 已完成 GitHub Pages 阅读入口。** 本版本在 v2.0.0 模块化结构上增加：
 
-- 将原来平铺的核心指南整理为 7 个长期模块。
-- 将模板和检查表按同一工作阶段归类。
-- 将案例区分为产品级案例和网站级案例。
-- 精简 README，使其重新成为导航入口而不是完整教程。
-- 收紧 AI、单页数据复盘与网站级分析之间的重复内容。
-- 统一部分旧文件命名和交叉引用。
-- 保留 v1.x 已验证的方法论，不为了“升级版本”重新发明流程。
+- 根目录新增 `index.html`，作为可视化知识库入口。
+- 新增 `.nojekyll`，避免 GitHub Pages 对带 YAML 元数据的 Markdown 进行 Jekyll 预处理。
+- 新增本地 CSS 与 JavaScript，不依赖第三方 CDN。
+- 新增集中式 Markdown 文档目录清单。
+- 支持模块导航、分类筛选与轻量搜索。
+- 支持 Markdown → HTML 阅读、自动文章目录和响应式布局。
+- 保持 v2.0.0 的 7 个长期模块、模板、检查表与案例结构不变。
+- 不增加新的 SEO 方法论，不引入构建工具或复杂部署流程。
 
 完整版本路线参见 [迭代路线](docs/01-foundation/roadmap.md)。
 
-后续新增内容遵循一个原则：**只有当真实项目反复出现同类问题，并且现有模块无法清晰承接时，才增加新的一级模块。**
+后续新增内容继续遵循一个原则：**只有当真实项目反复出现同类问题，并且现有模块无法清晰承接时，才增加新的一级模块。阅读页面本身保持轻量，只服务于现有 Markdown 知识库。**
