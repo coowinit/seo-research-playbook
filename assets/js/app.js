@@ -64,7 +64,7 @@
   }
 
   function renderHome(){
-    document.title='SEO 研究与网站优化操作手册';
+    document.title='SEO研究与网站优化操作手册';
     topActions.innerHTML=`<nav class="top-nav" aria-label="页内导航"><a href="#coreModules">模块</a><a href="#resources">模板</a><a href="#resources">检查表</a><a href="#cases">案例</a></nav><a class="text-button" href="README.md" target="_blank" rel="noopener">README</a>`;
 
     const guides=catalog.filter(x=>x.type==='guide'&&x.path!=='README.md');
@@ -84,7 +84,7 @@
     app.innerHTML=`
       <section class="hero">
         <p class="eyebrow">SEO Research &amp; Website Optimization Playbook</p>
-        <h1>企业网站 SEO 研究与网站优化操作手册</h1>
+        <h1>SEO研究与网站优化操作手册</h1>
         <p>从竞争研究、关键词与网站架构，到内容生产、页面与技术优化、Search Console 数据分析和长期内容治理。Markdown 是唯一正文来源，GitHub Pages 负责更清晰地查找和阅读。</p>
         <div class="hero-meta"><span class="pill">v${esc(catalogVersion)}</span><span class="pill">7 个核心模块</span><span class="pill">${catalog.length} 份 Markdown 文档</span><span class="pill">GitHub Pages</span></div>
       </section>
