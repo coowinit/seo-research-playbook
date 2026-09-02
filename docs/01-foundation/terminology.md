@@ -131,6 +131,27 @@
 | Search Console API | — | 用于程序化读取 Search Console 搜索表现数据的官方接口，适合自动报表和历史保存 |
 | 批量数据导出 | Bulk Data Export | 将 Search Console 搜索表现持续导出到 BigQuery 的官方能力，适合大型网站和长期数据分析 |
 
+### 月度数据与工作记录
+
+| 推荐写法 | 英文 / 缩写 | 说明 |
+|---|---|---|
+| SEO 月度数据跟踪 | Monthly SEO Performance Tracking | 按固定口径持续记录搜索、流量、询盘、成本、排名资产和工作动作，用于形成长期可比较的 SEO 工作证据链 |
+| 自然搜索会话 | Organic Search Sessions | 网站分析工具中来自自然搜索渠道的会话；建议作为 SEO 询盘转化率的固定分母，不与 GSC 点击混用 |
+| SEO 询盘 | SEO Lead / Organic Lead | 按企业统一归因规则确认来自自然搜索的询盘；需要长期保持同一口径 |
+| A 类询盘 | Qualified / A-class Lead | 按企业内部固定标准定义的高质量询盘，用于区分询盘数量与真实商机质量 |
+| SEO 投入 | SEO Investment | SEO 工具、内容制作、技术开发、外包等直接投入；建议与广告花费分开记录 |
+| 询盘转化率 | Lead Conversion Rate | SEO 询盘 ÷ 自然搜索会话；长期跟踪时应固定分母口径 |
+| A 类询盘占比 | A-class Lead Share | A 类询盘 ÷ SEO 询盘，用于观察询盘质量结构 |
+| A 类询盘转化率 | A-class Lead Conversion Rate | A 类询盘 ÷ 自然搜索会话，用于观察高质量商机获取效率 |
+| SEO 询盘成本 | SEO Cost per Lead | SEO 投入 ÷ SEO 询盘；SEO 存在跨月滞后，建议同时观察滚动 3 个月成本 |
+| A 类询盘成本 | SEO Cost per Qualified Lead | SEO 投入 ÷ A 类询盘；分母为 0 时应显示空白或 N/A，不显示计算错误 |
+| 滚动 3 个月成本 | Rolling 3-Month Cost | 最近 3 个月 SEO 投入总额 ÷ 最近 3 个月对应询盘总量，用于降低单月波动干扰 |
+| 目标关键词库 | Target Keyword Set | 由团队固定维护的核心关键词集合，用于长期统计 Top3、Top10 等排名资产，避免第三方数据库波动影响判断 |
+| 有搜索点击页面数 | Pages with Search Clicks | 统计周期内至少获得一次自然搜索点击的页面数量，用于观察 SEO 覆盖是否从少数页面向更多内容扩散 |
+| 环比 | MoM | 与上一个相邻周期比较，适合观察短期变化；季节性明显时需结合同比 |
+| 同比 | YoY | 与去年同期比较，适合观察季节性业务的长期变化 |
+| SEO 工作记录 | SEO Activity Log | 记录日期、页面、动作、原因、目标、数据基线、复查日期和实际结果，用于解释数据变化 |
+
 ## 7. 内容资产与治理
 
 | 推荐写法 | 英文 / 缩写 | 说明 |

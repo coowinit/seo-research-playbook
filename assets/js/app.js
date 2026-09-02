@@ -7,7 +7,7 @@
     '03':{name:'架构',desc:'把页面组织成可维护的网站内容体系。'},
     '04':{name:'内容',desc:'内容规划、证据、写作与 AI 辅助边界。'},
     '05':{name:'优化',desc:'页面 SEO 与抓取、索引、性能等技术基础。'},
-    '06':{name:'数据',desc:'单页复盘与 Search Console 网站级分析。'},
+    '06':{name:'数据',desc:'月度数据跟踪、单页复盘与 Search Console 网站级分析。'},
     '07':{name:'治理',desc:'历史内容、旧 URL 与长期内容资产维护。'}
   };
   let catalog=[];
@@ -25,7 +25,7 @@
     const resource=(title,desc,items)=>`<article class="resource-card"><h3>${title}</h3><p>${desc}</p><ul class="doc-list">${items.map(d=>'<li>'+itemLink(d)+'</li>').join('')}</ul></article>`;
     const compositeCases=examples.filter(x=>x.path.startsWith('examples/product-cases/composite-decking/'));const wallCases=examples.filter(x=>x.path.startsWith('examples/product-cases/wpc-wall-cladding/'));const siteCases=examples.filter(x=>x.section==='网站级案例');
     const caseCard=(title,desc,items)=>`<article class="case-card"><h3>${title}</h3><p class="module-desc">${desc}</p><ul class="doc-list">${items.map(d=>'<li>'+itemLink(d)+'</li>').join('')}</ul></article>`;
-    app.innerHTML=`<section class="hero"><p class="eyebrow">SEO Research & Website Optimization Playbook</p><h1>企业网站 SEO 研究与网站优化操作手册</h1><p>从竞争研究、关键词与网站架构，到内容生产、页面与技术优化、Search Console 数据分析和长期内容治理。点击文档将在新标签页中以 HTML 阅读模式打开。</p><div class="hero-meta"><span class="pill">v2.1.0</span><span class="pill">7 个长期模块</span><span class="pill">${catalog.length} 份 Markdown 文档</span><span class="pill">GitHub Pages</span></div></section>
+    app.innerHTML=`<section class="hero"><p class="eyebrow">SEO Research & Website Optimization Playbook</p><h1>企业网站 SEO 研究与网站优化操作手册</h1><p>从竞争研究、关键词与网站架构，到内容生产、页面与技术优化、Search Console 数据分析和长期内容治理。点击文档将在新标签页中以 HTML 阅读模式打开。</p><div class="hero-meta"><span class="pill">v2.2.0</span><span class="pill">7 个长期模块</span><span class="pill">${catalog.length} 份 Markdown 文档</span><span class="pill">GitHub Pages</span></div></section>
     <section><div class="search-panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><input id="searchInput" type="search" placeholder="搜索指南、模板、检查表和案例……" autocomplete="off"></div><div class="filters" id="filters"><button class="filter active" data-type="all">全部</button><button class="filter" data-type="guide">指南</button><button class="filter" data-type="template">模板</button><button class="filter" data-type="checklist">检查表</button><button class="filter" data-type="example">案例</button></div><div class="search-results" id="searchResults"><div class="section-head"><div><h2>搜索结果</h2><p id="searchCount"></p></div></div><div id="searchResultList" class="search-result-list"></div></div></section>
     <section class="section" id="coreModules"><div class="section-head"><div><h2>七个核心模块</h2><p>按照 SEO 工作生命周期组织，不需要按顺序全部阅读。</p></div></div><div class="module-grid">${moduleCards}</div></section>
     <section class="section" id="resources"><div class="section-head"><div><h2>模板与检查表</h2><p>需要实际执行项目时，优先复制对应模板，再使用检查表放行。</p></div></div><div class="resource-grid">${resource('工作模板','用于记录研究、规划、审核与复盘。',templates)}${resource('检查表','用于关键阶段检查与最终放行。',checks)}${resource('项目入口','GitHub 仓库说明、使用方式与模块导航。',catalog.filter(x=>x.path==='README.md'))}</div></section>

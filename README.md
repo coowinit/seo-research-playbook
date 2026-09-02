@@ -2,9 +2,9 @@
 
 一套面向企业网站、产品型网站和 B2B 网站的 SEO 研究、内容生产、网站架构、页面优化、技术检查、数据分析与长期治理方法。
 
-**当前版本：v2.1.0**
+**当前版本：v2.2.0**
 
-v2.1.0 在 v2.0.0 模块化知识库基础上新增 GitHub Pages 可视化阅读入口。SEO 方法论本身保持不变，新增能力只负责更方便地浏览、搜索和阅读仓库中的 Markdown 文档。
+v2.2.0 在 v2.1.0 GitHub Pages 阅读版基础上新增 **SEO 月度数据跟踪与工作记录模块**，把搜索表现、自然流量、SEO 询盘、A 类询盘、SEO 投入、关键词资产和实际工作动作连接成长期可比较的数据闭环；同时正式合并修复后的术语表。
 
 ## 核心工作流
 
@@ -48,7 +48,7 @@ v2.1.0 在 v2.0.0 模块化知识库基础上新增 GitHub Pages 可视化阅读
 | 03 架构 | 已确定的页面怎样组成一个完整网站 | [网站架构与内容体系](docs/03-architecture/site-architecture.md) |
 | 04 内容 | 怎样把研究转成可靠内容，以及怎样正确使用 AI | [内容生产与可信度审核](docs/04-content/content-production.md) · [AI 辅助规范](docs/04-content/ai-assisted-seo.md) |
 | 05 优化 | 一个页面怎样优化，以及怎样满足抓取、索引、渲染和性能要求 | [页面 SEO](docs/05-optimization/on-page-seo.md) · [技术 SEO](docs/05-optimization/technical-seo.md) |
-| 06 数据 | 页面发布后表现怎样，整个网站搜索表现怎样 | [单页表现与维护](docs/06-measurement/page-performance-and-maintenance.md) · [Search Console 网站级分析](docs/06-measurement/search-console-analysis.md) |
+| 06 数据 | 每月 SEO 结果怎样、页面发布后表现怎样、整个网站搜索表现怎样 | [SEO 月度数据跟踪](docs/06-measurement/seo-monthly-performance-tracking.md) · [单页表现与维护](docs/06-measurement/page-performance-and-maintenance.md) · [Search Console 网站级分析](docs/06-measurement/search-console-analysis.md) |
 | 07 治理 | 网站运营多年后，哪些内容应该保留、更新、合并、重构或移除 | [历史内容治理](docs/07-governance/content-governance.md) |
 
 ## 项目结构
@@ -141,6 +141,29 @@ assets/data/catalog.json
 - 新增、删除或重命名 `.md` 文件时，需要同步更新 `catalog.json` 中对应记录。
 - 阅读器本身不修改 Markdown 文件，仓库中的 `.md` 始终是唯一正文来源。
 
+## SEO 月度数据跟踪
+
+本版本新增一套长期数据导向的 SEO 工作记录方式，把数据拆成：
+
+```text
+结果
+↓
+诊断
+↓
+动作
+```
+
+建议每月固定记录 GSC 点击 / 展示、非品牌点击、自然搜索会话、SEO 询盘、A 类询盘、SEO 投入、目标关键词 Top10、有搜索点击页面数以及本月重要 SEO 动作。
+
+仓库同时提供：
+
+- [SEO 月度数据跟踪方法](docs/06-measurement/seo-monthly-performance-tracking.md)
+- [Markdown 月度模板](templates/06-measurement/seo-monthly-performance.md)
+- [Excel 月度数据跟踪表](templates/06-measurement/seo-monthly-performance-tracker.xlsx)
+- [SEO 月度复盘检查表](checklists/06-measurement/seo-monthly-review.md)
+
+Excel 数据表包含 **仪表盘、月度核心数据、页面组分析、SEO 工作记录、指标说明** 5 个工作区，并使用安全公式避免 `#DIV/0!`。真实长期数据建议保存在 Excel / Google Sheets，Markdown 继续负责指标定义和方法说明。
+
 ## 推荐使用方式
 
 ### 新建企业网站
@@ -155,7 +178,7 @@ assets/data/catalog.json
 6. [内容生产与可信度审核](docs/04-content/content-production.md)
 7. [页面 SEO](docs/05-optimization/on-page-seo.md)
 8. [技术 SEO](docs/05-optimization/technical-seo.md)
-9. 发布后进入 [数据分析](docs/06-measurement/search-console-analysis.md)
+9. 发布后进入 [SEO 月度数据跟踪](docs/06-measurement/seo-monthly-performance-tracking.md) 与 [Search Console 网站级分析](docs/06-measurement/search-console-analysis.md)
 
 ### 优化已有网站
 
@@ -197,6 +220,7 @@ Search Console 网站级分析
 | 内容生产 | [内容简报](templates/04-content/content-brief.md) | [文章审核](checklists/04-content/article-review.md) |
 | 页面 SEO | [模板](templates/05-optimization/page-seo.md) | [检查表](checklists/05-optimization/page-seo.md) |
 | 技术 SEO | [模板](templates/05-optimization/technical-seo.md) | [检查表](checklists/05-optimization/technical-seo.md) |
+| SEO 月度数据跟踪 | [Markdown 模板](templates/06-measurement/seo-monthly-performance.md) · [Excel 数据表](templates/06-measurement/seo-monthly-performance-tracker.xlsx) | [月度复盘](checklists/06-measurement/seo-monthly-review.md) |
 | 单页表现 | [模板](templates/06-measurement/content-performance.md) | — |
 | Search Console 网站级分析 | [模板](templates/06-measurement/search-console-analysis.md) | [检查表](checklists/06-measurement/search-console-analysis.md) |
 | 历史内容治理 | [模板](templates/07-governance/content-governance.md) | [检查表](checklists/07-governance/content-governance.md) |
@@ -238,17 +262,17 @@ Search Console 网站级分析
 
 ## 版本与后续维护
 
-**v2.1.0 已完成 GitHub Pages 阅读入口。** 本版本在 v2.0.0 模块化结构上增加：
+**v2.2.0 已完成 SEO 月度数据跟踪与工作记录模块。** 本版本在 v2.1.0 GitHub Pages 阅读能力上增加：
 
-- 根目录新增 `index.html`，作为可视化知识库入口。
-- 新增 `.nojekyll`，避免 GitHub Pages 对带 YAML 元数据的 Markdown 进行 Jekyll 预处理。
-- 新增本地 CSS 与 JavaScript，不依赖第三方 CDN。
-- 新增集中式 Markdown 文档目录清单。
-- 支持模块导航、分类筛选与轻量搜索。
-- 支持 Markdown → HTML 阅读、自动文章目录和响应式布局。
-- 保持 v2.0.0 的 7 个长期模块、模板、检查表与案例结构不变。
-- 不增加新的 SEO 方法论，不引入构建工具或复杂部署流程。
+- 新增 SEO 月度数据跟踪方法，统一搜索、流量、询盘、成本、关键词资产和工作动作的长期记录口径。
+- 新增 Markdown 月度数据模板与月度复盘检查表。
+- 新增可直接使用的 Excel 数据跟踪表，包含仪表盘、月度核心数据、页面组分析、SEO 工作记录和指标说明。
+- 增加 SEO 询盘、A 类询盘、SEO 投入、滚动 3 个月成本、目标关键词库、有搜索点击页面数等指标定义。
+- 明确 GSC 点击与自然搜索会话的职责边界，固定询盘转化率分母。
+- 明确固定目标关键词库与第三方全站关键词估算的区别。
+- 把修复后的 `terminology.md` 正式纳入仓库，术语表按主题分组，解决 GitHub Markdown 超长表格中断问题。
+- GitHub Pages 文档目录同步增加月度数据模块，原有 7 个长期一级模块保持不变。
 
 完整版本路线参见 [迭代路线](docs/01-foundation/roadmap.md)。
 
-后续新增内容继续遵循一个原则：**只有当真实项目反复出现同类问题，并且现有模块无法清晰承接时，才增加新的一级模块。阅读页面本身保持轻量，只服务于现有 Markdown 知识库。**
+后续继续遵循：**先通过真实项目使用现有数据体系，再决定是否增加新的指标或自动化；不为了报表完整而增加不会影响决策的数据。**

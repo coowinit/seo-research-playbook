@@ -121,7 +121,7 @@ Composite Decking 通常更适合重视较低日常维护、外观一致性以�
 ## 6. 推荐大纲
 
 ```markdown
-# Composite Decking vs. Wood: Which Is Right for Your Project?
+**H1：Composite Decking vs. Wood: Which Is Right for Your Project?**
 
 ## Composite Decking vs. Wood at a Glance
 

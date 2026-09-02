@@ -1,5 +1,5 @@
 {
-  "version": "2.1.0",
+  "version": "2.2.0",
   "items": [
     {
       "title": "项目说明与使用导航",
@@ -72,6 +72,18 @@
       "section": "检查表",
       "order": "checklists/05-optimization/technical-seo.md",
       "search": "技术 seo 检查表 本检查表用于快速确认网站或重要页面是否存在抓取、索引、规范网址、状态码、渲染、结构化数据和性能方面的明显问题。 checklists/05-optimization/technical-seo.md 检查表 优化"
+    },
+    {
+      "title": "SEO 月度复盘检查表",
+      "description": "用于确认月度数据口径、业务结果、成本、排名资产、页面组诊断和工作记录是否形成闭环。",
+      "path": "checklists/06-measurement/seo-monthly-review.md",
+      "type": "checklist",
+      "typeLabel": "检查表",
+      "module": "06",
+      "moduleLabel": "数据",
+      "section": "检查表",
+      "order": "checklists/06-measurement/00-seo-monthly-review.md",
+      "search": "seo 月度复盘检查表 用于确认月度数据口径、业务结果、成本、排名资产、页面组诊断和工作记录是否形成闭环。 checklists/06-measurement/seo-monthly-review.md 检查表 数据"
     },
     {
       "title": "Google Search Console 网站级分析检查表",
@@ -228,6 +240,18 @@
       "section": "核心指南",
       "order": "docs/05-optimization/technical-seo.md",
       "search": "技术 seo：从可访问到可索引、可理解与可加载 本模块用于检查网站和页面是否具备稳定进入搜索引擎抓取、渲染与索引流程的技术条件。 docs/05-optimization/technical-seo.md 指南 优化"
+    },
+    {
+      "title": "SEO 月度数据跟踪与工作记录",
+      "description": "用固定月度口径连接搜索、自然流量、SEO 询盘、A 类询盘、SEO 投入、关键词资产和实际 SEO 动作。",
+      "path": "docs/06-measurement/seo-monthly-performance-tracking.md",
+      "type": "guide",
+      "typeLabel": "指南",
+      "module": "06",
+      "moduleLabel": "数据",
+      "section": "核心指南",
+      "order": "docs/06-measurement/00-seo-monthly-performance-tracking.md",
+      "search": "seo 月度数据跟踪与工作记录 用固定月度口径连接搜索、自然流量、seo 询盘、a 类询盘、seo 投入、关键词资产和实际 seo 动作。 docs/06-measurement/seo-monthly-performance-tracking.md 指南 数据"
     },
     {
       "title": "单页发布后表现与维护",
@@ -612,6 +636,18 @@
       "section": "模板",
       "order": "templates/05-optimization/technical-seo.md",
       "search": "技术 seo 审计与修复模板 - templates/05-optimization/technical-seo.md 模板 优化"
+    },
+    {
+      "title": "SEO 月度数据跟踪模板",
+      "description": "用于每月固定记录 SEO 搜索、流量、业务结果、成本、排名资产和重要工作动作。",
+      "path": "templates/06-measurement/seo-monthly-performance.md",
+      "type": "template",
+      "typeLabel": "模板",
+      "module": "06",
+      "moduleLabel": "数据",
+      "section": "工作模板",
+      "order": "templates/06-measurement/00-seo-monthly-performance.md",
+      "search": "seo 月度数据跟踪模板 用于每月固定记录 seo 搜索、流量、业务结果、成本、排名资产和重要工作动作。 templates/06-measurement/seo-monthly-performance.md 模板 数据"
     },
     {
       "title": "SEO 页面发布后数据与维护模板",
