@@ -1,241 +1,668 @@
-(function(){
-  "use strict";
+(() => {
+  'use strict';
 
-  const app=document.getElementById('app');
-  const topActions=document.getElementById('topActions');
-  const footerMeta=document.getElementById('footerMeta');
+  const CATALOG_URL = 'assets/data/catalog.json';
+  const DEFAULT_DOC = 'docs/01-foundation/seo-workflow.md';
 
-  const moduleInfo={
-    '01':{name:'基础',desc:'总流程、术语与长期维护规则。',when:'第一次使用这套知识库，或需要统一团队方法与术语时。'},
-    '02':{name:'研究',desc:'关键词、搜索结果与竞争网站研究。',when:'准备新产品、新页面、新内容或竞争分析时。'},
-    '03':{name:'架构',desc:'把页面组织成可维护的网站内容体系。',when:'规划新网站、改版或重新整理产品与内容层级时。'},
-    '04':{name:'内容',desc:'内容规划、证据、写作与 AI 辅助边界。',when:'把研究结果转成可审核、可发布的可靠内容时。'},
-    '05':{name:'优化',desc:'页面 SEO 与抓取、索引、性能等技术基础。',when:'页面上线前检查结构、可发现性与技术放行条件时。'},
-    '06':{name:'数据',desc:'月度跟踪、单页复盘与 Search Console 网站级分析。',when:'页面发布后需要判断 SEO 是否真正产生结果时。'},
-    '07':{name:'治理',desc:'历史内容、旧 URL 与长期内容资产维护。',when:'网站运营多年后需要合并、更新、重构或下架内容时。'}
+  const docsNav = document.getElementById('docs-nav');
+  const menuToggle = document.getElementById('menu-toggle');
+  const pageMask = document.getElementById('page-mask');
+  const docStatus = document.getElementById('doc-status');
+  const docBody = document.getElementById('doc-body');
+  const tocList = document.getElementById('toc-list');
+  const tocToggle = document.getElementById('toc-toggle');
+  const mobileTocPanel = document.getElementById('mobile-toc-panel');
+  const mobileTocList = document.getElementById('mobile-toc-list');
+  const tocClose = document.getElementById('toc-close');
+
+  let catalog = [];
+  let navData = [];
+  let validPages = new Set();
+  let activePage = '';
+  let activeRequest = null;
+  let tocObserver = null;
+
+  const typeRank = {
+    guide: 1,
+    template: 2,
+    checklist: 3,
+    example: 4
   };
 
-  let catalog=[];
-  let catalogVersion='2.2.1';
+  function byOrder(a, b) {
+    const rankA = typeRank[a.type] || 9;
+    const rankB = typeRank[b.type] || 9;
+    if (rankA !== rankB) return rankA - rankB;
 
-  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const docUrl=(path,hash='')=>'index.html?doc='+encodeURIComponent(path)+(hash?hash:'');
-  const openAttrs=()=> 'target="_blank" rel="noopener"';
-  const byOrder=(a,b)=>String(a.order||a.path).localeCompare(String(b.order||b.path),'zh-CN',{numeric:true});
-
-  async function loadCatalog(){
-    const r=await fetch('assets/data/catalog.json',{cache:'no-cache'});
-    if(!r.ok)throw new Error('无法读取文档目录');
-    const data=await r.json();
-    catalog=(data.items||[]).sort(byOrder);
-    catalogVersion=data.version||catalogVersion;
-    if(footerMeta)footerMeta.textContent=`${catalog.length} 份文档 · 7 个核心模块 · v${catalogVersion}`;
-    return data;
+    return String(a.order || a.path).localeCompare(
+      String(b.order || b.path),
+      'zh-CN',
+      { numeric: true }
+    );
   }
 
-  function itemLink(item,cls='doc-link'){
-    if(cls==='doc-link'){
-      return `<a class="${cls}" href="${docUrl(item.path)}" ${openAttrs()}><span class="doc-link-title">${esc(item.title)}</span><span class="doc-link-side"><span class="doc-link-type">${esc(item.typeLabel)}</span><span class="doc-arrow" aria-hidden="true">→</span></span></a>`;
+  function buildNavData(items) {
+    const groups = [];
+
+    for (let module = 1; module <= 7; module += 1) {
+      const id = String(module).padStart(2, '0');
+      const children = items
+        .filter((item) => item.module === id)
+        .sort(byOrder)
+        .map(toNavItem);
+
+      if (!children.length) continue;
+      const label = items.find((item) => item.module === id)?.moduleLabel || id;
+      groups.push({ title: `${id} ${label}`, children });
     }
-    return `<a class="${cls}" href="${docUrl(item.path)}" ${openAttrs()}><h3>${esc(item.title)}</h3><p>${esc(item.description)}</p><div class="result-meta"><span>${esc(item.typeLabel)}</span><span>${esc(item.moduleLabel)}</span></div></a>`;
+
+    const composite = items
+      .filter((item) => item.path.startsWith('examples/product-cases/composite-decking/'))
+      .sort(byOrder)
+      .map(toNavItem);
+
+    const wall = items
+      .filter((item) => item.path.startsWith('examples/product-cases/wpc-wall-cladding/'))
+      .sort(byOrder)
+      .map(toNavItem);
+
+    const siteCases = items
+      .filter((item) => item.path.startsWith('examples/site-cases/'))
+      .sort(byOrder)
+      .map(toNavItem);
+
+    if (composite.length) groups.push({ title: '08 Composite Decking 案例', children: composite });
+    if (wall.length) groups.push({ title: '09 WPC Wall Cladding 案例', children: wall });
+    if (siteCases.length) groups.push({ title: '10 网站级案例', children: siteCases });
+
+    return groups;
   }
 
-  function quickCard(title,desc,path,tag){
-    const item=catalog.find(x=>x.path===path);
-    if(!item)return '';
-    return `<a class="quick-card" href="${docUrl(path)}" ${openAttrs()}><span class="quick-tag">${esc(tag)}</span><h3>${esc(title)}</h3><p>${esc(desc)}</p><span class="quick-link">开始阅读 <span aria-hidden="true">→</span></span></a>`;
+  function toNavItem(item) {
+    return {
+      title: String(item.title || ''),
+      page: String(item.path || ''),
+      type: String(item.type || ''),
+      typeLabel: String(item.typeLabel || '')
+    };
   }
 
-  function groupedResources(items){
-    const groups=['02','03','04','05','06','07'];
-    return groups.map(num=>{
-      const docs=items.filter(x=>x.module===num).sort(byOrder);
-      if(!docs.length)return '';
-      return `<div class="resource-group"><div class="resource-group-head"><span>${num}</span><strong>${esc(moduleInfo[num]?.name||num)}</strong></div><ul class="doc-list compact">${docs.map(d=>'<li>'+itemLink(d)+'</li>').join('')}</ul></div>`;
-    }).join('');
+  async function loadCatalog() {
+    const response = await fetch(`${CATALOG_URL}?v=${Date.now()}`, { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error(`文档目录读取失败（HTTP ${response.status}）：${CATALOG_URL}`);
+    }
+
+    const data = await response.json();
+    catalog = Array.isArray(data.items) ? data.items : [];
+    navData = buildNavData(catalog);
+    validPages = new Set(catalog.map((item) => String(item.path || '')).filter(Boolean));
   }
 
-  function productCaseCard(title,desc,items){
-    return `<article class="case-card product-case"><div class="case-head"><div><span class="case-kicker">产品级案例</span><h3>${esc(title)}</h3><p class="module-desc">${esc(desc)}</p></div><span class="module-count">${items.length} 份文档</span></div><ul class="doc-list">${items.sort(byOrder).map(d=>'<li>'+itemLink(d)+'</li>').join('')}</ul></article>`;
+  function getRequestedPage() {
+    const params = new URLSearchParams(window.location.search);
+    const requested = String(params.get('page') || params.get('doc') || '').trim();
+
+    if (validPages.has(requested)) return requested;
+    if (validPages.has(DEFAULT_DOC)) return DEFAULT_DOC;
+    return catalog[0]?.path || '';
   }
 
-  function siteCaseCard(item){
-    return `<a class="site-case-card" href="${docUrl(item.path)}" ${openAttrs()}><span class="case-kicker">网站级案例</span><h3>${esc(item.title)}</h3><p>${esc(item.description)}</p><span class="quick-link">查看案例 <span aria-hidden="true">→</span></span></a>`;
+  function getDocInfo(page) {
+    return catalog.find((item) => item.path === page) || null;
   }
 
-  function renderHome(){
-    document.title='SEO研究与网站优化操作手册';
-    topActions.innerHTML=`<nav class="top-nav" aria-label="页内导航"><a href="#coreModules">模块</a><a href="#resources">模板</a><a href="#resources">检查表</a><a href="#cases">案例</a></nav><a class="text-button" href="README.md" target="_blank" rel="noopener">README</a>`;
-
-    const guides=catalog.filter(x=>x.type==='guide'&&x.path!=='README.md');
-    const templates=catalog.filter(x=>x.type==='template');
-    const checks=catalog.filter(x=>x.type==='checklist');
-    const examples=catalog.filter(x=>x.type==='example');
-
-    const moduleCards=Object.entries(moduleInfo).map(([num,info])=>{
-      const docs=guides.filter(x=>x.module===num).sort(byOrder);
-      return `<article class="module-card"><div class="module-top"><div><div class="module-number">${num}</div><h3>${esc(info.name)}</h3><p class="module-desc">${esc(info.desc)}</p><p class="module-when"><strong>什么时候用：</strong>${esc(info.when)}</p></div><span class="module-count">${docs.length} 篇指南</span></div><ul class="doc-list">${docs.map(d=>'<li>'+itemLink(d)+'</li>').join('')}</ul></article>`;
-    }).join('');
-
-    const compositeCases=examples.filter(x=>x.path.startsWith('examples/product-cases/composite-decking/'));
-    const wallCases=examples.filter(x=>x.path.startsWith('examples/product-cases/wpc-wall-cladding/'));
-    const siteCases=examples.filter(x=>x.section==='网站级案例').sort(byOrder);
-
-    app.innerHTML=`
-      <section class="hero">
-        <p class="eyebrow">SEO Research &amp; Website Optimization Playbook</p>
-        <h1>SEO研究与网站优化操作手册</h1>
-        <p>从竞争研究、关键词与网站架构，到内容生产、页面与技术优化、Search Console 数据分析和长期内容治理。Markdown 是唯一正文来源，GitHub Pages 负责更清晰地查找和阅读。</p>
-        <div class="hero-meta"><span class="pill">v${esc(catalogVersion)}</span><span class="pill">7 个核心模块</span><span class="pill">${catalog.length} 份 Markdown 文档</span><span class="pill">GitHub Pages</span></div>
-      </section>
-
-      <section class="quick-section" id="quickStart">
-        <div class="section-head"><div><h2>快速开始</h2><p>不需要先读完全部文档，根据当前任务直接进入对应路径。</p></div></div>
-        <div class="quick-grid">
-          ${quickCard('第一次使用','先理解整套 SEO 工作流、模块关系和执行顺序。','docs/01-foundation/seo-workflow.md','入门')}
-          ${quickCard('规划新网站','从页面职责、产品层级、内容体系和内部链接开始。','docs/03-architecture/site-architecture.md','新站')}
-          ${quickCard('优化现有网站','先用真实 Search Console 数据定位问题，再决定更新或治理。','docs/06-measurement/search-console-analysis.md','优化')}
-          ${quickCard('生产一篇 SEO 内容','从关键词与页面映射开始，再进入 SERP、内容简报和审核。','docs/02-research/keyword-research.md','内容')}
-        </div>
-      </section>
-
-      <section class="search-section" id="searchSection">
-        <div class="search-panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><input id="searchInput" type="search" placeholder="搜索指南、模板、检查表和案例……" autocomplete="off"></div>
-        <div class="filter-row"><div class="filters" id="filters"><button class="filter active" data-type="all">全部</button><button class="filter" data-type="guide">指南</button><button class="filter" data-type="template">模板</button><button class="filter" data-type="checklist">检查表</button><button class="filter" data-type="example">案例</button></div><span class="search-status" id="searchStatus">共 ${catalog.length} 份文档</span></div>
-        <div class="search-results" id="searchResults"><div class="section-head"><div><h2>搜索结果</h2><p id="searchCount"></p></div></div><div id="searchResultList" class="search-result-list"></div></div>
-      </section>
-
-      <section class="section" id="coreModules"><div class="section-head"><div><h2>七个核心模块</h2><p>按照 SEO 工作生命周期组织；模块可以独立使用，也可以组成完整闭环。</p></div></div><div class="module-grid">${moduleCards}</div></section>
-
-      <section class="section" id="resources"><div class="section-head"><div><h2>工作资源</h2><p>模板用于执行和记录，检查表用于阶段验收与最终放行。</p></div></div><div class="resource-grid two-col"><article class="resource-card"><div class="resource-card-head"><div><span class="case-kicker">执行</span><h3>工作模板</h3></div><span class="module-count">${templates.length} 份</span></div><p>开始研究、规划、审核或复盘时复制使用。</p>${groupedResources(templates)}</article><article class="resource-card"><div class="resource-card-head"><div><span class="case-kicker">验收</span><h3>检查表</h3></div><span class="module-count">${checks.length} 份</span></div><p>完成一个阶段后逐项核验，避免遗漏关键风险。</p>${groupedResources(checks)}</article></div></section>
-
-      <section class="section" id="cases"><div class="section-head"><div><h2>实战案例</h2><p>产品级案例验证完整执行流程；网站级案例展示更高层级的架构、数据与治理方法。</p></div></div><h3 class="subsection-title">产品级案例</h3><div class="product-case-grid">${productCaseCard('Composite Decking','从核心产品关键词到文章、页面 SEO、技术 SEO 与发布后复盘。',compositeCases)}${productCaseCard('WPC Wall Cladding','在墙体系统、安装、防火与规范约束更强的产品中验证同一方法。',wallCases)}</div><h3 class="subsection-title site-title">网站级案例</h3><div class="site-case-grid">${siteCases.map(siteCaseCard).join('')}</div></section>
+  function chevronSvg() {
+    return `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="m8 10 4 4 4-4" />
+      </svg>
     `;
-
-    bindHomeSearch();
   }
 
-  function bindHomeSearch(){
-    let type='all';
-    const input=document.getElementById('searchInput');
-    const filters=document.getElementById('filters');
-    const wrap=document.getElementById('searchResults');
-    const list=document.getElementById('searchResultList');
-    const count=document.getElementById('searchCount');
-    const status=document.getElementById('searchStatus');
-    const sections=['quickStart','coreModules','resources','cases'].map(id=>document.getElementById(id));
+  function renderNav(currentPage) {
+    docsNav.replaceChildren();
+    const fragment = document.createDocumentFragment();
 
-    function run(){
-      const q=input.value.trim().toLowerCase();
-      const active=q||type!=='all';
-      if(!active){
-        wrap.classList.remove('active');
-        sections.forEach(x=>{if(x)x.hidden=false;});
-        status.textContent=`共 ${catalog.length} 份文档`;
+    navData.forEach((group, groupIndex) => {
+      if (!group?.title || !Array.isArray(group.children) || !group.children.length) return;
+
+      const containsActive = group.children.some((item) => item.page === currentPage);
+      const section = document.createElement('section');
+      section.className = 'nav-group';
+      if (containsActive) section.classList.add('is-open');
+
+      const button = document.createElement('button');
+      button.className = 'nav-group-title';
+      button.type = 'button';
+      button.dataset.groupIndex = String(groupIndex);
+      button.setAttribute('aria-expanded', String(containsActive));
+      button.innerHTML = `<span>${escapeHtml(group.title)}</span>${chevronSvg()}`;
+
+      const list = document.createElement('div');
+      list.className = 'nav-children';
+
+      group.children.forEach((item) => {
+        if (!item?.title || !item?.page) return;
+
+        const link = document.createElement('a');
+        link.className = 'nav-link';
+        link.href = makeReaderUrl(item.page);
+        link.dataset.page = item.page;
+
+        const badge = document.createElement('span');
+        badge.className = `nav-type nav-type--${item.type || 'default'}`;
+        badge.textContent = item.typeLabel || '文档';
+
+        const title = document.createElement('span');
+        title.className = 'nav-link-title';
+        title.textContent = item.title;
+
+        link.append(badge, title);
+
+        if (item.page === currentPage) {
+          link.classList.add('is-active');
+          link.setAttribute('aria-current', 'page');
+        }
+
+        list.appendChild(link);
+      });
+
+      section.append(button, list);
+      fragment.appendChild(section);
+    });
+
+    docsNav.appendChild(fragment);
+  }
+
+  function setNavActive(page) {
+    docsNav.querySelectorAll('.nav-link').forEach((link) => {
+      const isActive = link.dataset.page === page;
+      link.classList.toggle('is-active', isActive);
+      if (isActive) link.setAttribute('aria-current', 'page');
+      else link.removeAttribute('aria-current');
+    });
+
+    docsNav.querySelectorAll('.nav-group').forEach((group) => {
+      const containsActive = Boolean(group.querySelector(`.nav-link[data-page="${cssEscape(page)}"]`));
+      const title = group.querySelector('.nav-group-title');
+      if (!containsActive || group.classList.contains('is-open')) return;
+
+      docsNav.querySelectorAll('.nav-group.is-open').forEach((openGroup) => {
+        if (openGroup === group) return;
+        openGroup.classList.remove('is-open');
+        openGroup.querySelector('.nav-group-title')?.setAttribute('aria-expanded', 'false');
+      });
+
+      group.classList.add('is-open');
+      title?.setAttribute('aria-expanded', 'true');
+    });
+  }
+
+  function toggleNavGroup(button) {
+    const group = button.closest('.nav-group');
+    if (!group) return;
+
+    const nextOpen = !group.classList.contains('is-open');
+
+    docsNav.querySelectorAll('.nav-group.is-open').forEach((openGroup) => {
+      if (openGroup === group) return;
+      openGroup.classList.remove('is-open');
+      openGroup.querySelector('.nav-group-title')?.setAttribute('aria-expanded', 'false');
+    });
+
+    group.classList.toggle('is-open', nextOpen);
+    button.setAttribute('aria-expanded', String(nextOpen));
+  }
+
+  function setStatus(message = '', type = '') {
+    docStatus.textContent = message;
+    docStatus.className = 'doc-status';
+    if (message) docStatus.classList.add('is-visible');
+    if (type === 'error') docStatus.classList.add('is-error');
+  }
+
+  function markdownToHtml(markdown) {
+    if (!window.marked || typeof window.marked.parse !== 'function') {
+      throw new Error('Markdown 渲染器未加载，请检查 assets/js/marked.umd.js。');
+    }
+
+    if (typeof window.marked.setOptions === 'function') {
+      window.marked.setOptions({ gfm: true, breaks: false });
+    }
+
+    const cleanMarkdown = String(markdown).replace(
+      /^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/,
+      ''
+    );
+
+    return window.marked.parse(cleanMarkdown);
+  }
+
+  function slugify(text, index) {
+    const base = String(text)
+      .trim()
+      .toLowerCase()
+      .replace(/<[^>]+>/g, '')
+      .replace(/[\s]+/g, '-')
+      .replace(/[^\w\-\u4e00-\u9fff]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    return base || `section-${index + 1}`;
+  }
+
+  function makeUniqueHeadingIds(root) {
+    const used = new Set();
+    const headings = root.querySelectorAll('h1, h2, h3, h4, h5, h6');
+
+    headings.forEach((heading, index) => {
+      let id = heading.id || slugify(heading.textContent, index);
+      let candidate = id;
+      let counter = 2;
+
+      while (
+        used.has(candidate) ||
+        (document.getElementById(candidate) && document.getElementById(candidate) !== heading)
+      ) {
+        candidate = `${id}-${counter}`;
+        counter += 1;
+      }
+
+      heading.id = candidate;
+      used.add(candidate);
+    });
+  }
+
+  function splitHref(href) {
+    const hashIndex = href.indexOf('#');
+    if (hashIndex < 0) return { path: href, hash: '' };
+    return { path: href.slice(0, hashIndex), hash: href.slice(hashIndex) };
+  }
+
+  function normalizeRelativePath(currentPath, relativePath) {
+    const base = currentPath.split('/');
+    base.pop();
+
+    const parts = relativePath.startsWith('/') ? [] : base;
+    relativePath.replace(/^\/+/, '').split('/').forEach((part) => {
+      if (!part || part === '.') return;
+      if (part === '..') parts.pop();
+      else parts.push(part);
+    });
+
+    return parts.join('/');
+  }
+
+  function isExternalHref(href) {
+    return /^[a-z][a-z0-9+.-]*:/i.test(href) || href.startsWith('//');
+  }
+
+  function makeReaderUrl(page, hash = '') {
+    return `?page=${encodeURIComponent(page)}${hash || ''}`;
+  }
+
+  function enhanceMarkdown(root, currentPath) {
+    // marked.umd.js 当前版本会输出 checkbox，但不会自动附加 GitHub 风格的
+    // task-list-item / contains-task-list 类。这里统一补齐，避免任务列表同时
+    // 出现普通列表圆点和复选框。
+    root.querySelectorAll('li > input[type="checkbox"]').forEach((checkbox) => {
+      const item = checkbox.closest('li');
+      const list = item?.parentElement;
+
+      item?.classList.add('task-list-item');
+      if (list?.matches('ul, ol')) list.classList.add('contains-task-list');
+    });
+
+    root.querySelectorAll('table').forEach((table) => {
+      if (table.parentElement?.classList.contains('table-scroll')) return;
+      const wrapper = document.createElement('div');
+      wrapper.className = 'table-scroll';
+      table.parentNode.insertBefore(wrapper, table);
+      wrapper.appendChild(table);
+    });
+
+    root.querySelectorAll('a[href]').forEach((link) => {
+      const href = String(link.getAttribute('href') || '').trim();
+      if (!href) return;
+
+      if (href.startsWith('#')) {
+        link.addEventListener('click', (event) => {
+          const id = decodeURIComponent(href.slice(1));
+          const target = document.getElementById(id);
+          if (!target) return;
+          event.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          window.history.replaceState(window.history.state, '', makeReaderUrl(activePage, `#${encodeURIComponent(id)}`));
+        });
         return;
       }
-      const found=catalog.filter(x=>(type==='all'||x.type===type)&&(!q||x.search.includes(q))).slice(0,60);
-      wrap.classList.add('active');
-      sections.forEach(x=>{if(x)x.hidden=true;});
-      status.textContent=`找到 ${found.length} 项`;
-      count.textContent=q?`“${input.value.trim()}” · ${found.length} 项`:`${found.length} 项`;
-      list.innerHTML=found.length?found.map(x=>itemLink(x,'result-card')).join(''):'<div class="empty">没有找到匹配文档。</div>';
-    }
 
-    input.addEventListener('input',run);
-    filters.addEventListener('click',e=>{
-      const b=e.target.closest('.filter');
-      if(!b)return;
-      filters.querySelectorAll('.filter').forEach(x=>x.classList.remove('active'));
-      b.classList.add('active');
-      type=b.dataset.type;
-      run();
-    });
-  }
-
-  function resolveRelative(current,href){
-    const [raw,hash='']=href.split('#');
-    if(!raw)return {path:current,hash:hash?'#'+hash:''};
-    if(/^[a-z]+:/i.test(raw)||raw.startsWith('//'))return null;
-    const base=current.split('/');base.pop();
-    for(const part of raw.split('/')){
-      if(!part||part==='.')continue;
-      if(part==='..')base.pop();else base.push(part);
-    }
-    return {path:base.join('/'),hash:hash?'#'+hash:''};
-  }
-
-  function setupRenderedLinks(container,currentPath){
-    container.querySelectorAll('a[href]').forEach(a=>{
-      const href=a.getAttribute('href');if(!href)return;
-      if(href.startsWith('#'))return;
-      const resolved=resolveRelative(currentPath,href);
-      if(resolved&&resolved.path.toLowerCase().endsWith('.md')&&catalog.some(x=>x.path===resolved.path)){
-        a.href=docUrl(resolved.path,resolved.hash);return;
+      if (isExternalHref(href)) {
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        return;
       }
-      if(resolved&&!/^[a-z]+:/i.test(href)&&!href.startsWith('//')){
-        a.href=resolved.path+(resolved.hash||'');return;
+
+      const { path: rawPath, hash } = splitHref(href);
+      const resolvedPath = normalizeRelativePath(currentPath, rawPath);
+
+      if (resolvedPath.toLowerCase().endsWith('.md') && validPages.has(resolvedPath)) {
+        link.href = makeReaderUrl(resolvedPath, hash);
+        link.dataset.page = resolvedPath;
+        link.addEventListener('click', (event) => {
+          event.preventDefault();
+          loadPage(resolvedPath, { hash });
+        });
+        return;
       }
-      a.target='_blank';a.rel='noopener';
+
+      // Excel、PDF、图片等本地资源继续按原文件路径打开。
+      link.href = resolvedPath + hash;
+      if (/\.(xlsx?|pdf|zip|docx?|pptx?)$/i.test(resolvedPath)) {
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+      }
     });
+
+    root.querySelectorAll('img[src]').forEach((image) => {
+      const src = String(image.getAttribute('src') || '').trim();
+      if (src && !isExternalHref(src) && !src.startsWith('data:') && !src.startsWith('/')) {
+        image.src = normalizeRelativePath(currentPath, src);
+      }
+      image.loading = 'lazy';
+      image.decoding = 'async';
+    });
+
+    root.querySelectorAll('iframe').forEach((frame) => {
+      frame.loading = 'lazy';
+    });
+
+    makeUniqueHeadingIds(root);
   }
 
-  function makeToc(headings){
-    if(!headings.length)return '<p class="module-desc">本文没有二级目录。</p>';
-    return '<ul class="toc">'+headings.filter(h=>h.level>=2&&h.level<=3).map(h=>`<li class="level-${h.level}"><a href="#${h.id}">${esc(h.text)}</a></li>`).join('')+'</ul>';
+  function getTocHeadings() {
+    return [...docBody.querySelectorAll('h2')];
   }
 
-  function activateToc(){
-    const links=[...document.querySelectorAll('.toc a')];if(!links.length)return;
-    const map=links.map(a=>({a,el:document.getElementById(a.hash.slice(1))})).filter(x=>x.el);
-    const update=()=>{
-      let active=map[0];
-      for(const x of map){if(x.el.getBoundingClientRect().top<=130)active=x;else break;}
-      links.forEach(a=>a.classList.remove('active'));
-      if(active)active.a.classList.add('active');
-    };
-    window.addEventListener('scroll',update,{passive:true});update();
+  function createTocLink(heading) {
+    const link = document.createElement('a');
+    link.href = `#${heading.id}`;
+    link.dataset.target = heading.id;
+    link.className = 'toc-link';
+    link.textContent = heading.textContent.trim();
+    return link;
   }
 
-  async function renderDoc(path){
-    const item=catalog.find(x=>x.path===path);
-    if(!item){app.innerHTML='<div class="error-card"><h1>未找到文档</h1><p>该文档不在当前知识库目录中。</p><a class="button" href="index.html">返回首页</a></div>';return;}
+  function renderToc() {
+    if (tocObserver) {
+      tocObserver.disconnect();
+      tocObserver = null;
+    }
 
-    document.title=item.title+' · SEO 操作手册';
-    topActions.innerHTML='<a class="text-button mobile-home" href="index.html">知识库首页</a><a class="text-button secondary-action" href="README.md" target="_blank" rel="noopener">README</a><button class="button secondary-action" id="copyLink">复制链接</button>';
-    app.innerHTML='<div class="loading-card">正在读取 Markdown 文档…</div>';
+    tocList.replaceChildren();
+    mobileTocList.replaceChildren();
+    const headings = getTocHeadings();
 
-    try{
-      const r=await fetch(path,{cache:'no-cache'});if(!r.ok)throw new Error('HTTP '+r.status);
-      const md=await r.text();
-      const rendered=SeoMarkdown.renderMarkdown(md);
-      const toc=makeToc(rendered.headings);
-      const metaEntries=Object.entries(rendered.meta||{});
-      const meta=metaEntries.length?`<details class="frontmatter"><summary>文档元数据</summary><dl>${metaEntries.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl></details>`:'';
-      const similar=catalog.filter(x=>x.type===item.type&&x.path!==item.path&&((x.module===item.module)||(x.section===item.section))).sort(byOrder);
-      const prev=similar.filter(x=>x.order<item.order).slice(-1)[0];
-      const next=similar.find(x=>x.order>item.order);
+    if (!headings.length) {
+      const emptyDesktop = document.createElement('p');
+      emptyDesktop.className = 'toc-empty';
+      emptyDesktop.textContent = '本页暂无章节导航';
+      tocList.appendChild(emptyDesktop);
+      mobileTocList.appendChild(emptyDesktop.cloneNode(true));
+      tocToggle.disabled = true;
+      return;
+    }
 
-      app.innerHTML=`<div class="reader-page"><aside class="reader-sidebar"><a class="reader-back" href="index.html">← 返回知识库</a><p class="toc-title">本文目录</p>${toc}</aside><section class="reader-main"><header class="reader-header"><div class="reader-path">${esc(item.moduleLabel)} / ${esc(item.typeLabel)} · ${esc(item.path)}</div><h1 class="reader-title">${esc(item.title)}</h1><p class="reader-desc">${esc(item.description)}</p><div class="reader-tools"><a class="button" href="${esc(path)}" target="_blank" rel="noopener">查看 Markdown 原文</a><button class="button" id="scrollTop">回到顶部</button></div></header>${meta}<details class="mobile-toc"><summary>本文目录</summary>${toc}</details><article class="markdown-body" id="markdownBody">${rendered.html}</article><nav class="reader-bottom">${prev?`<a href="${docUrl(prev.path)}"><small>上一篇</small><strong>${esc(prev.title)}</strong></a>`:'<span></span>'}${next?`<a href="${docUrl(next.path)}"><small>下一篇</small><strong>${esc(next.title)}</strong></a>`:'<span></span>'}</nav></section></div>`;
+    tocToggle.disabled = false;
+    headings.forEach((heading) => {
+      tocList.appendChild(createTocLink(heading));
+      mobileTocList.appendChild(createTocLink(heading));
+    });
 
-      const article=document.getElementById('markdownBody');
-      const firstH1=article.querySelector(':scope > h1:first-child');if(firstH1)firstH1.remove();
-      setupRenderedLinks(article,path);activateToc();
-      document.getElementById('scrollTop')?.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
-      document.getElementById('copyLink')?.addEventListener('click',async e=>{try{await navigator.clipboard.writeText(location.href);e.target.textContent='已复制';setTimeout(()=>e.target.textContent='复制链接',1200);}catch{}});
-      if(location.hash)setTimeout(()=>document.getElementById(decodeURIComponent(location.hash.slice(1)))?.scrollIntoView(),80);
-    }catch(err){
-      app.innerHTML=`<div class="error-card"><h1>文档加载失败</h1><p>无法读取 <code>${esc(path)}</code>。请确认 GitHub Pages 已正常部署，并且文件路径没有改变。</p><p class="reader-path">${esc(err.message)}</p><a class="button" href="index.html">返回首页</a></div>`;
+    const allTocLinks = document.querySelectorAll('.toc-link[data-target]');
+
+    function setTocActive(id) {
+      allTocLinks.forEach((link) => {
+        link.classList.toggle('is-active', link.dataset.target === id);
+      });
+    }
+
+    const visible = new Map();
+    tocObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => visible.set(entry.target.id, entry));
+
+      const active = headings
+        .map((heading) => visible.get(heading.id))
+        .filter((entry) => entry?.isIntersecting)
+        .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+
+      if (active?.target?.id) {
+        setTocActive(active.target.id);
+        return;
+      }
+
+      const passed = headings.filter((heading) => heading.getBoundingClientRect().top < 150);
+      if (passed.length) setTocActive(passed[passed.length - 1].id);
+    }, {
+      rootMargin: '-110px 0px -65% 0px',
+      threshold: [0, 1]
+    });
+
+    headings.forEach((heading) => tocObserver.observe(heading));
+    setTocActive(headings[0].id);
+  }
+
+  function encodedPath(path) {
+    return path.split('/').map((part) => encodeURIComponent(part)).join('/');
+  }
+
+  async function fetchMarkdown(page) {
+    if (activeRequest) activeRequest.abort();
+
+    const controller = new AbortController();
+    activeRequest = controller;
+    const url = `${encodedPath(page)}?v=${Date.now()}`;
+
+    try {
+      const response = await fetch(url, { cache: 'no-store', signal: controller.signal });
+      if (!response.ok) {
+        throw new Error(`文档读取失败（HTTP ${response.status}）：${page}`);
+      }
+      return await response.text();
+    } finally {
+      if (activeRequest === controller) activeRequest = null;
     }
   }
 
-  async function init(){
-    try{
+  function applyRequestedHash(hash = '') {
+    const currentHash = hash || window.location.hash;
+    if (!currentHash) return;
+
+    const id = decodeURIComponent(currentHash.replace(/^#/, ''));
+    window.setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'auto', block: 'start' });
+    }, 0);
+  }
+
+  async function loadPage(page, options = {}) {
+    const info = getDocInfo(page);
+    if (!info) return;
+
+    activePage = page;
+    setNavActive(page);
+    closeMobileNav();
+    closeMobileToc();
+
+    docBody.replaceChildren();
+    tocList.replaceChildren();
+    mobileTocList.replaceChildren();
+    setStatus('正在载入文档…');
+
+    if (options.updateHistory !== false) {
+      const url = new URL(window.location.href);
+      url.search = '';
+      url.searchParams.set('page', page);
+      url.hash = options.hash || '';
+      window.history.pushState({ page }, '', url);
+    }
+
+    document.title = `${info.title} · SEO 研究与网站优化操作手册`;
+
+    try {
+      const markdown = await fetchMarkdown(page);
+      docBody.innerHTML = markdownToHtml(markdown);
+      enhanceMarkdown(docBody, page);
+      renderToc();
+      setStatus('');
+
+      if (options.hash || window.location.hash) {
+        applyRequestedHash(options.hash);
+      } else if (!options.keepScroll) {
+        window.scrollTo({ top: 0, behavior: 'auto' });
+      }
+    } catch (error) {
+      if (error?.name === 'AbortError') return;
+
+      docBody.replaceChildren();
+      renderToc();
+      let message = error?.message || '文档读取失败，请稍后重试。';
+      if (window.location.protocol === 'file:') {
+        message += ' 当前通过 file:// 打开，浏览器通常会阻止读取 Markdown；请使用本地 HTTP 服务器或 GitHub Pages 预览。';
+      }
+      setStatus(message, 'error');
+    }
+  }
+
+  function openMobileNav() {
+    document.body.classList.add('nav-open');
+    menuToggle.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeMobileNav() {
+    document.body.classList.remove('nav-open');
+    menuToggle.setAttribute('aria-expanded', 'false');
+  }
+
+  function openMobileToc() {
+    if (tocToggle.disabled) return;
+    closeMobileNav();
+    document.body.classList.add('toc-open');
+    tocToggle.setAttribute('aria-expanded', 'true');
+    mobileTocPanel.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeMobileToc() {
+    document.body.classList.remove('toc-open');
+    tocToggle.setAttribute('aria-expanded', 'false');
+    mobileTocPanel.setAttribute('aria-hidden', 'true');
+  }
+
+  function escapeHtml(text) {
+    return String(text).replace(/[&<>'"]/g, (char) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;'
+    }[char]));
+  }
+
+  function cssEscape(value) {
+    if (window.CSS?.escape) return window.CSS.escape(value);
+    return String(value).replace(/[^a-zA-Z0-9_-]/g, '\\$&');
+  }
+
+  docsNav.addEventListener('click', (event) => {
+    const titleButton = event.target.closest('.nav-group-title');
+    if (titleButton) {
+      toggleNavGroup(titleButton);
+      return;
+    }
+
+    const link = event.target.closest('.nav-link');
+    if (!link) return;
+
+    const page = link.dataset.page;
+    if (!validPages.has(page)) return;
+
+    event.preventDefault();
+    if (page === activePage) {
+      closeMobileNav();
+      return;
+    }
+
+    loadPage(page);
+  });
+
+  function handleTocClick(event) {
+    const link = event.target.closest('.toc-link');
+    if (!link) return;
+
+    const id = link.dataset.target;
+    const target = id ? document.getElementById(id) : null;
+    if (!target) return;
+
+    event.preventDefault();
+    closeMobileToc();
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.history.replaceState(
+      window.history.state,
+      '',
+      makeReaderUrl(activePage, `#${encodeURIComponent(id)}`)
+    );
+  }
+
+  tocList.addEventListener('click', handleTocClick);
+  mobileTocList.addEventListener('click', handleTocClick);
+
+  menuToggle.addEventListener('click', () => {
+    if (document.body.classList.contains('nav-open')) closeMobileNav();
+    else {
+      closeMobileToc();
+      openMobileNav();
+    }
+  });
+
+  tocToggle.addEventListener('click', () => {
+    if (document.body.classList.contains('toc-open')) closeMobileToc();
+    else openMobileToc();
+  });
+
+  tocClose.addEventListener('click', closeMobileToc);
+  pageMask.addEventListener('click', () => {
+    closeMobileNav();
+    closeMobileToc();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    closeMobileNav();
+    closeMobileToc();
+  });
+
+  window.addEventListener('popstate', () => {
+    const page = getRequestedPage();
+    if (page && page !== activePage) {
+      loadPage(page, { updateHistory: false });
+    } else if (page === activePage) {
+      applyRequestedHash();
+    }
+  });
+
+  async function init() {
+    try {
+      setStatus('正在载入文档目录…');
       await loadCatalog();
-      const path=new URLSearchParams(location.search).get('doc');
-      if(path)renderDoc(path);else renderHome();
-    }catch(err){
-      app.innerHTML=`<div class="error-card"><h1>知识库加载失败</h1><p>${esc(err.message)}</p></div>`;
+      const initialPage = getRequestedPage();
+      renderNav(initialPage);
+      await loadPage(initialPage, { updateHistory: false });
+    } catch (error) {
+      let message = error?.message || '知识库加载失败。';
+      if (window.location.protocol === 'file:') {
+        message += ' 当前通过 file:// 打开，请使用本地 HTTP 服务器或 GitHub Pages 预览。';
+      }
+      setStatus(message, 'error');
     }
   }
 
